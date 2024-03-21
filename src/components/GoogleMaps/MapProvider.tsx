@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 
 import {
   useLoadScript,
@@ -10,6 +10,7 @@ import {
 
 import "@reach/combobox/styles.css";
 import mapStyles from "./mapStyles";
+import { formatRelative } from "date-fns";
 
 const libraries = ["places"];
 const center = {
@@ -30,8 +31,8 @@ const options = {
 };
 
 interface MarkerType {
-  lat: number | undefined;
-  lng: number | undefined;
+  lat: number;
+  lng: number;
   time: Date;
 }
 
@@ -42,6 +43,8 @@ const MapProvider = () => {
   });
 
   const [markers, setMarkers] = useState<MarkerType[]>([]);
+  const [selected, setSelected] = useState<MarkerType | null>(null);
+
   const onMapClick = useCallback((event: any) => {
     setMarkers((current: MarkerType[]) => [
       ...current,
@@ -52,6 +55,9 @@ const MapProvider = () => {
       },
     ]);
   }, []);
+
+  const mapRef = useRef();
+  const onMapLoad = useCallback(() => {}, []);
 
   if (loadError) return "Error Loading Maps";
   if (!isLoaded) return "Loading maps...";
@@ -64,7 +70,7 @@ const MapProvider = () => {
         WOLFS <span> ⛺</span>
       </h1>
       <GoogleMap
-        zoom={8}
+        zoom={12}
         center={center}
         mapContainerStyle={mapContainerStyle}
         options={options}
@@ -80,8 +86,24 @@ const MapProvider = () => {
               origin: new window.google.maps.Point(0, 0),
               anchor: new window.google.maps.Point(25, 25),
             }}
+            onClick={() => {
+              setSelected(marker);
+            }}
           />
         ))}
+        {selected ? (
+          <InfoWindow
+            position={{ lat: selected.lat, lng: selected.lng }}
+            onCloseClick={() => {
+              setSelected(null);
+            }}
+          >
+            <div className="space-y-2">
+              <h2 className="text-lg">Wolf Spotted!</h2>
+              <p>Spotted {formatRelative(selected.time, new Date())}</p>
+            </div>
+          </InfoWindow>
+        ) : null}
       </GoogleMap>
     </div>
   );
