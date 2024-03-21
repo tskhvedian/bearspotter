@@ -5,15 +5,20 @@ import {
   GoogleMap,
   Marker,
   InfoWindow,
-  Libraries,
 } from "@react-google-maps/api";
+
+import usePlacesAutocomplete, {
+  getGeocode,
+  getLatLng,
+} from "use-places-autocomplete";
 
 import "@reach/combobox/styles.css";
 import mapStyles from "./mapStyles";
-import { formatRelative } from "date-fns";
+import { add, formatRelative } from "date-fns";
+import { Combobox, ComboboxInput, ComboboxPopover } from "@reach/combobox";
 
 const libraries = ["places"];
-const center = {
+const center: google.maps.LatLngLiteral = {
   lat: 41.7151,
   lng: 44.8271,
 };
@@ -69,6 +74,7 @@ const MapProvider = () => {
       <h1 className="absolute top-5 left-5 z-10 text-lg font-bold">
         WOLFS <span> ⛺</span>
       </h1>
+      <Search />
       <GoogleMap
         zoom={12}
         center={center}
@@ -110,3 +116,36 @@ const MapProvider = () => {
 };
 
 export default MapProvider;
+
+function Search() {
+  const {
+    ready,
+    value,
+    setValue,
+    suggestions: { status, data },
+    clearSuggestions,
+  } = usePlacesAutocomplete();
+  console.log(value, "Status: ", status, "Suggestions Data: ", data);
+
+  return (
+    <div className="absolute w-full py-10 flex justify-center z-50 ">
+      <Combobox>
+        <ComboboxInput
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+          }}
+          disabled={!ready}
+          placeholder="Enter an Address"
+          className="border border-lime-600 rounded px-6 py-2"
+        />
+        <ComboboxPopover>
+          {status === "OK" &&
+            data.map(({ place_id, description }) => (
+              <Combobox key={place_id}>{description}</Combobox>
+            ))}
+        </ComboboxPopover>
+      </Combobox>
+    </div>
+  );
+}
